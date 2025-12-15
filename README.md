@@ -63,6 +63,12 @@ DB_NAME=noradb                # Name of the PostgreSQL database
 # n8n critically depends on this key to encrypt sensitive data such as credentials.
 # A robust key can be generated using a command like `openssl rand -base64 32` or similar secure methods.
 N8N_ENCRYPTION_KEY=your_strong_encryption_key_here
+
+# --- n8n Security Configuration ---
+# This variable enhances security by preventing workflows from accessing environment variables
+# defined in this .env file or on the host system.
+# Set to `true` to block access, `false` to allow. It is highly recommended to keep this `true`.
+N8N_BLOCK_ENV_ACCESS_IN_NODE=true
 ```
 **🔑 IMPORTANT SECURITY NOTE:** The `N8N_ENCRYPTION_KEY` is paramount for the security of your n8n instance. Generate a highly secure key and ensure it is backed up in a supremely safe and secret location. **Loss or modification of this key will render n8n unable to decrypt any previously saved credentials and encrypted data.**
 
@@ -88,9 +94,9 @@ Once all services are actively running, you can readily access the intuitive n8n
 
 This `nora-core` project is ingeniously configured to facilitate direct versioning of your n8n workflows and their associated credentials within Git:
 
-*   **Automated File Saving:** The meticulously crafted `docker-compose.yml` configuration instructs n8n to automatically persist your workflows and credentials as human-readable `.json` files. These files will reside in the following designated local directories:
-    *   `data/n8n_local_data/workflows/`
-    *   `data/n8n_local_data/credentials/`
+*   **Automated File Saving:** The meticulously crafted `docker-compose.yml` configuration instructs n8n to automatically persist your workflows and credentials as human-readable `.json` files. These files will reside in designated local directories.
+
+    **Note:** These directories (`data/n8n_local_data/workflows/` and `data/n8n_local_data/credentials/`) are created automatically by n8n upon its initial startup. They will not be present in the repository clone initially.
 
 *   **Commit to Git:** After diligently creating new workflows or refining existing ones within the n8n UI, you will observe tangible changes in these `.json` files. It is imperative to `add` and `commit` these modifications to your Git repository (e.g., `git add . && git commit -m "feat: Implement new customer onboarding workflow"`).
 

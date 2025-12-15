@@ -4,7 +4,7 @@ networks:
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: nora_db
     restart: unless-stopped
     environment:
@@ -15,6 +15,11 @@ services:
       - ./data/postgres_data:/var/lib/postgresql/data
     networks:
       - nora_core_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      retries: 5
+      start_period: 5s
 
   n8n:
     image: n8nio/n8n
@@ -29,14 +34,14 @@ services:
       DB_POSTGRESDB_DATABASE: ${DB_NAME:-noradb}
       DB_POSTGRESDB_USER: ${DB_USER:-norauser}
       DB_POSTGRESDB_PASSWORD: ${DB_PASSWORD:-norapassword}
-
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
-      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
       N8N_VERSION_MANAGEMENT_ENABLED: "true"
-
+      N8N_FILE_SYSTEM_SUPPORT_ENABLED: "true"
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
     volumes:
       - ./data/n8n_local_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - nora_core_network
-    depends_on:
-      - postgres
