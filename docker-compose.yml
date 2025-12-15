@@ -1,0 +1,42 @@
+networks:
+  nora_core_network:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: nora_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-norauser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-norapassword}
+      POSTGRES_DB: ${DB_NAME:-noradb}
+    volumes:
+      - ./data/postgres_data:/var/lib/postgresql/data
+    networks:
+      - nora_core_network
+
+  n8n:
+    image: n8nio/n8n
+    container_name: nora_core_app
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${DB_NAME:-noradb}
+      DB_POSTGRESDB_USER: ${DB_USER:-norauser}
+      DB_POSTGRESDB_PASSWORD: ${DB_PASSWORD:-norapassword}
+
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_VERSION_MANAGEMENT_ENABLED: "true"
+
+    volumes:
+      - ./data/n8n_local_data:/home/node/.n8n
+    networks:
+      - nora_core_network
+    depends_on:
+      - postgres

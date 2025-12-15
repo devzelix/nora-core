@@ -1,0 +1,11 @@
+.env
+
+node_modules/
+npm-debug.log
+
+data/postgres_data/
+
+data/n8n_local_data/*
+
+!data/n8n_local_data/workflows
+!data/n8n_local_data/credentials
