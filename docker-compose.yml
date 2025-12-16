@@ -13,6 +13,7 @@ services:
       POSTGRES_DB: ${DB_NAME:-noradb}
     volumes:
       - ./data/postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
     networks:
       - nora_core_network
     healthcheck:
@@ -31,15 +32,21 @@ services:
       DB_TYPE: postgresdb
       DB_POSTGRESDB_HOST: postgres
       DB_POSTGRESDB_PORT: 5432
-      DB_POSTGRESDB_DATABASE: ${DB_NAME:-noradb}
+      DB_POSTGRESDB_DATABASE: n8n_db
       DB_POSTGRESDB_USER: ${DB_USER:-norauser}
       DB_POSTGRESDB_PASSWORD: ${DB_PASSWORD:-norapassword}
+      
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
       N8N_VERSION_MANAGEMENT_ENABLED: "true"
       N8N_FILE_SYSTEM_SUPPORT_ENABLED: "true"
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: 168
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: 50000
     volumes:
       - ./data/n8n_local_data:/home/node/.n8n
+      - ./git_backup:/backup
     depends_on:
       postgres:
         condition: service_healthy
