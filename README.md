@@ -1,137 +1,170 @@
 # Nora Core 🚀
 
+Nora Core proporciona un entorno de desarrollo robusto y versionable para la automatización de flujos de trabajo con **n8n**, utilizando **PostgreSQL** como base de datos y **Docker** para una gestión de entorno consistente.
 
-
-This repository contains the base configuration for the `nora-core` project. It leverages **n8n** for robust workflow automation and **PostgreSQL** as its reliable database backend. The entire setup is engineered for reproducibility using Docker and meticulously configured to enable seamless version control for all n8n workflows.
-
----
-
-## 📝 Table of Contents
-
-*   [Prerequisites](#-prerequisites)
-*   [Setup and Configuration](#-setup-and-configuration)
-*   [Usage](#-usage)
-*   [n8n Workflow Version Control](#n8n-workflow-version-control)
-*   [Project Structure](#-project-structure)
-*   [Stopping Services](#-stopping-services)
+Este proyecto está diseñado con un enfoque de "GitOps", permitiendo que los flujos de trabajo (workflows) y credenciales de n8n sean exportados a formato JSON y versionados en Git de una manera controlada a través de scripts especializados.
 
 ---
 
-## ⚙️ Prerequisites
+## 📝 Tabla de Contenidos
 
-Before you embark on setting up this project, ensure you have the following essential software installed on your system:
-
-*   [**Docker**](https://docs.docker.com/get-docker/)
-    *   _Platform for developing, shipping, and running applications in containers._
-*   [**Docker Compose**](https://docs.docker.com/compose/install/)
-    *   _A powerful tool for defining and running multi-container Docker applications. (Often conveniently bundled with Docker Desktop)._
+*   [Prerrequisitos](#-prerrequisitos)
+*   [Configuración Inicial](#-configuración-inicial)
+*   [Uso Diario](#-uso-diario)
+*   [Backup y Restauración de Workflows](#-backup-y-restauración-de-workflows)
+*   [Variables de Entorno](#-variables-de-entorno)
+*   [Estructura del Proyecto](#-estructura-del-proyecto)
+*   [Detener los Servicios](#-detener-los-servicios)
 
 ---
 
-## 🚀 Setup and Configuration
+## ⚙️ Prerrequisitos
 
-Follow these streamlined steps to effortlessly get the `nora-core` project up and running:
+Asegúrate de tener el siguiente software instalado en tu sistema:
 
-### 1. Clone the Repository
+*   [**Docker**](https://docs.docker.com/get-docker/) y [**Docker Compose**](https://docs.docker.com/compose/install/) (Normalmente incluido en Docker Desktop).
+*   **Git**
 
-Begin by cloning this repository to your local machine and navigating into its directory:
+---
+
+## 🚀 Configuración Inicial
+
+Sigue estos pasos para poner en marcha el proyecto:
+
+### 1. Clonar el Repositorio
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+git clone <URL_DE_TU_REPOSITORIO>
 cd nora-core
 ```
-*(Remember to replace `<YOUR_REPOSITORY_URL>` with the actual URL of your Git repository)*
 
-### 2. Set Up Environment Variables
+### 2. Crear el Archivo de Entorno
 
-Create your local `.env` configuration file by copying the provided template. This file is crucial as it will securely store your environment-specific credentials and settings.
+Crea tu archivo local `.env` a partir de la plantilla. Este archivo contendrá todas tus claves y configuraciones secretas y no será subido a Git.
 
 ```bash
+# En Windows (Command Prompt)
+copy .env.template .env
+
+# En Windows (PowerShell)
+cp .env.template .env
+
+# En Linux o macOS
 cp .env.template .env
 ```
 
-Now, meticulously edit the newly created `.env` file and populate the variables with their respective values:
+### 3. Configurar las Variables de Entorno
 
-```ini
-# --- PostgreSQL Database Configuration ---
-DB_USER=norauser              # Username for the PostgreSQL database
-DB_PASSWORD=norapassword      # Password for the PostgreSQL user
-DB_NAME=noradb                # Name of the PostgreSQL database
+Abre el archivo `.env` y rellena **todas** las variables. Presta especial atención a la `N8N_ENCRYPTION_KEY`.
 
-# --- n8n Service Configuration ---
-# ENCRYPTION KEY: Generate an exceedingly strong and unique key. ABSOLUTELY DO NOT SHARE IT!
-# n8n critically depends on this key to encrypt sensitive data such as credentials.
-# A robust key can be generated using a command like `openssl rand -base64 32` or similar secure methods.
-N8N_ENCRYPTION_KEY=your_strong_encryption_key_here
+**🔑 ¡MUY IMPORTANTE!** La `N8N_ENCRYPTION_KEY` es crítica para la seguridad de n8n. Úsala para encriptar datos sensibles como las credenciales. Genera una clave segura y guárdala en un lugar secreto. Si la pierdes, n8n no podrá leer tus credenciales.
 
-# --- n8n Security Configuration ---
-# This variable enhances security by preventing workflows from accessing environment variables
-# defined in this .env file or on the host system.
-# Set to `true` to block access, `false` to allow. It is highly recommended to keep this `true`.
-N8N_BLOCK_ENV_ACCESS_IN_NODE=true
-```
-**🔑 IMPORTANT SECURITY NOTE:** The `N8N_ENCRYPTION_KEY` is paramount for the security of your n8n instance. Generate a highly secure key and ensure it is backed up in a supremely safe and secret location. **Loss or modification of this key will render n8n unable to decrypt any previously saved credentials and encrypted data.**
+Puedes generar una clave segura con comandos como:
+`openssl rand -base64 32`
 
-### 3. Start the Docker Services
+### 4. Iniciar los Servicios
 
-From the project's root directory, execute the following command to gracefully build and launch both the PostgreSQL database and n8n services in the background:
+Desde la raíz del proyecto, ejecuta Docker Compose para construir e iniciar los contenedores de PostgreSQL y n8n en segundo plano.
 
 ```bash
 docker-compose up -d
 ```
 
----
-
-## 🌐 Usage
-
-Once all services are actively running, you can readily access the intuitive n8n user interface via your preferred web browser:
-
-*   **n8n UI:** `http://localhost:5678`
+La primera vez que se inicie, el contenedor de PostgreSQL ejecutará automáticamente los scripts que encuentre en `init-scripts` para configurar la base de datos `n8n_db`.
 
 ---
 
-## ✨ n8n Workflow Version Control
+## 🌐 Uso Diario
 
-This `nora-core` project is ingeniously configured to facilitate direct versioning of your n8n workflows and their associated credentials within Git:
+Una vez que los servicios estén en ejecución, puedes acceder a la interfaz de n8n en tu navegador:
 
-*   **Automated File Saving:** The meticulously crafted `docker-compose.yml` configuration instructs n8n to automatically persist your workflows and credentials as human-readable `.json` files. These files will reside in designated local directories.
-
-    **Note:** These directories (`data/n8n_local_data/workflows/` and `data/n8n_local_data/credentials/`) are created automatically by n8n upon its initial startup. They will not be present in the repository clone initially.
-
-*   **Commit to Git:** After diligently creating new workflows or refining existing ones within the n8n UI, you will observe tangible changes in these `.json` files. It is imperative to `add` and `commit` these modifications to your Git repository (e.g., `git add . && git commit -m "feat: Implement new customer onboarding workflow"`).
-
-*   **Seamless Restoration:** Should you clone this repository onto a new development machine and initiate Docker Compose, n8n will intelligently read these `.json` files, thereby automatically loading all your previously versioned workflows and credentials.
+*   **URL de n8n:** `http://localhost:5678`
+*   **Usuario:** `nora_admin` (o el que definas en `.env`)
+*   **Contraseña:** `Nora112025` (o la que definas en `.env`)
 
 ---
 
-## 📂 Project Structure
+## ✨ Backup y Restauración de Workflows
 
-A concise overview of the project's directory and file organization:
+Este proyecto utiliza un sistema de scripts para gestionar la exportación e importación de workflows y credenciales, moviéndolos entre el directorio de trabajo de n8n (`data/n8n_local_data`, no versionado) y el directorio de backup (`git_backup`, versionado en Git).
+
+### Exportar (Hacer un Backup)
+
+Después de crear o modificar workflows en la interfaz de n8n, ejecuta el script de exportación para guardarlos en Git. Esto copiará los archivos `.json` relevantes al directorio `git_backup`.
+
+*   **En Windows (PowerShell):**
+    ```powershell
+    .\scripts\git_export.ps1
+    ```
+*   **En Linux o macOS:**
+    ```bash
+    ./scripts/git_export.sh
+    ```
+
+Después de exportar, revisa los cambios con `git status` y crea un commit para guardar tus workflows en el historial del repositorio.
+
+### Importar (Restaurar un Backup)
+
+Si clonas el repositorio en una máquina nueva o cambias de rama y necesitas cargar los workflows versionados en n8n, ejecuta el script de importación **antes** de iniciar los contenedores.
+
+*   **En Windows (PowerShell):**
+    ```powershell
+    .\scripts\git_import.ps1
+    ```
+*   **En Linux o macOS:**
+    ```bash
+    ./scripts/git_import.sh
+    ```
+---
+
+## 🔑 Variables de Entorno
+
+Descripción de las variables en el archivo `.env.template`:
+
+| Variable                  | Descripción                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `DB_USER`                 | Nombre de usuario para la base de datos PostgreSQL.                         |
+| `DB_PASSWORD`             | Contraseña para el usuario de PostgreSQL.                                   |
+| `DB_NAME`                 | Nombre de la base de datos PostgreSQL principal.                            |
+| `N8N_ENCRYPTION_KEY`      | **La clave más importante.** Única y secreta para encriptar credenciales.     |
+| `N8N_BASIC_AUTH_ACTIVE`   | Activa (`true`) o desactiva (`false`) la autenticación básica de n8n.         |
+| `N8N_BASIC_AUTH_USER`     | Nombre de usuario para el login de n8n.                                     |
+| `N8N_BASIC_AUTH_PASSWORD` | Contraseña para el login de n8n.                                            |
+| `GENERIC_TIMEZONE`        | Zona horaria para los contenedores (ej. `America/Caracas`).                 |
+| `TZ`                      | Alias para `GENERIC_TIMEZONE`, asegura consistencia.                        |
+
+---
+
+## 📂 Estructura del Proyecto
 
 ```
 .
-├── .env                  # Local environment variables (Explicitly Untracked by Git)
-├── .env.template         # Template for .env (Tracked by Git)
-├── .gitattributes        # Git attribute configurations (Tracked by Git)
-├── .gitignore            # Git ignore rules (Tracked by Git)
-├── docker-compose.yml    # Docker services definition (Tracked by Git)
-└── data/                 # Container for service-related data (Mostly Untracked by Git)
-    ├── n8n_local_data/   # n8n runtime data and configurations
-    │   ├── workflows/    # <-- n8n Workflows reside here! (Tracked by Git)
-    │   └── credentials/  # <-- n8n Credentials reside here! (Tracked by Git)
-    └── postgres_data/    # PostgreSQL database files (Untracked by Git)
+├── .env                  # Archivo local con secretos (Ignorado por Git)
+├── .env.template         # Plantilla para el archivo .env
+├── .gitignore            # Archivos y directorios ignorados por Git
+├── docker-compose.yml    # Define los servicios de Docker (Postgres y n8n)
+├── README.md             # Este archivo de documentación
+├── data/                 # Datos de tiempo de ejecución (Ignorado por Git)
+│   ├── n8n_local_data/   # Directorio de trabajo de n8n (workflows, credenciales, etc.)
+│   └── postgres_data/    # Archivos de la base de datos PostgreSQL
+├── git_backup/           # Directorio para backups de workflows y credenciales (Versionado en Git)
+│   ├── credentials/
+│   └── workflows/
+├── init-scripts/         # Scripts que se ejecutan al crear la base de datos por primera vez
+│   └── create_n8n_db.sh
+└── scripts/              # Scripts para la gestión de backups
+    ├── git_export.ps1    # (PowerShell) Exporta workflows a git_backup/
+    ├── git_export.sh     # (Bash) Exporta workflows a git_backup/
+    ├── git_import.ps1    # (PowerShell) Importa workflows desde git_backup/
+    └── git_import.sh     # (Bash) Importa workflows desde git_backup/
 ```
-
 ---
 
-## 🛑 Stopping Services
+## 🛑 Detener los Servicios
 
-To gracefully halt all actively running Docker services associated with this project:
+Para detener todos los servicios de Docker asociados al proyecto:
 
 ```bash
 docker-compose down
 ```
-
----
-
-**⚠️ Proprietary Software Notice:** This software is confidential and proprietary. All rights are reserved. Unauthorized copying or distribution of this software, or any portion of it, is strictly prohibited.
+Esto parará y eliminará los contenedores, pero los datos en los volúmenes (`data/` y `git_backup/`) persistirán.
